@@ -95,7 +95,7 @@ public class MainServer {
             System.out.println("Files disponible : " + filesList);
 
         }catch(FileNotFoundException e){
-            System.out.println("Erreur : fichier de configuration introuvable");
+            System.out.println("Erreur : fichier de configuration introuvable...");
         }
     }
 
