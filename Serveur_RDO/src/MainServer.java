@@ -41,6 +41,26 @@ public class MainServer {
                             System.out.println("Jeton envoyé : " + token);
                         }
 
+                        //Commande LS
+                        String messagleClient2 = in.readLine();
+                        System.out.println("Message recu : " + messagleClient2);
+                        if (messagleClient2.startsWith("LS")){
+                            //Extraction du jeton
+                            String[] message = messagleClient2.split("\\|");
+                            String token = message[1]; // ??
+
+                            //On considère que le jeton est toujours valide
+                            //Donc on fait une vérification ici
+                            StringBuilder response = new StringBuilder("LS|" + filesList.size());
+                            for (String file : filesList){
+                                response.append("|").append(file);
+                            }
+                            out.println(response.toString());
+                            System.out.println("Liste envoyée : " + response);
+                        }
+                        else {
+                            out.println("ERROR");
+                        }
                         // fermeture de la connexion
                         clientSocket.close();
 
@@ -52,12 +72,7 @@ public class MainServer {
                 }).start();
             }
 
-            /*// Attente de la connnexion d'un seul client pour l'instant
-            Socket clientSocket = serverSocket.accept();
 
-            //Fermeture simplifiée pour ce premier test
-            clientSocket.close();
-            serverSocket.close();*/
         }catch(IOException e) {
             e.printStackTrace();
         }

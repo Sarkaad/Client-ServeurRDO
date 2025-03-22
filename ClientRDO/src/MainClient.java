@@ -24,6 +24,17 @@ public class MainClient {
 			String response = in.readLine();
 			System.out.println("Réponse recue : " + response);
 
+			//supposons que nous aillons déjà recu le jeton via REGISTER et que je le stock dans token
+			String token = "token";
+
+			//Envoie de la commande LS avec le jeton
+			out.println("LS|" + token + "|");
+			System.out.println("Commande LS envoyée au serveur.");
+
+			//Lecture et affichage de la réponse du serveur
+			String lsresponse = in.readLine();
+			System.out.println("lsresponse : " + lsresponse);
+
 			//Fermeture de la connexion après le test rapide
 			socket.close();
 
