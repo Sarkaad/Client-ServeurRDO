@@ -3,6 +3,7 @@ import java.io.PrintWriter;
 import java.io.*;
 import java.net.Socket;
 import java.io.IOException;
+import java.util.Scanner;
 
 // Connection avec le Serveur
 public class MainClient {
@@ -11,36 +12,60 @@ public class MainClient {
 		Socket socket = new Socket("localhost", 5000);
         System.out.println("Connecté au server !");*/
 
-		try {
-			Socket socket = new Socket("localhost", 5000);
-			BufferedReader in = new BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+		try(Socket socket = new Socket( "localhost", 5000 );
+			BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
+			PrintWriter out = new PrintWriter( socket.getOutputStream(), true);
+			Scanner sc = new Scanner(System.in)) {
 
-			//Envoi du REGISTER avec IP locale ( méthode simple )
-			out.println("REGISTER|127.0.0.1|");
-			System.out.println("Demande REGISTER envoyée au serveur.");
+			String token = null;
+			boolean isRegistered = false;
 
-			//Attente réponse serveur
-			String response = in.readLine();
-			System.out.println("Réponse recue : " + response);
+			//Boucle pour entre REGISTER
+			while ( !isRegistered){
+				System.out.println("Veuillez vous connecter en entrant la comamnde qu'il faut  : ");
+				String firstCommand = sc.nextLine().trim();
+				if (firstCommand.equals("REGISTER")){
+					out.println(firstCommand);
+					String response = in.readLine();
+					//System.out.println("Réponse du serveur : " + response);
 
-			//supposons que nous aillons déjà recu le jeton via REGISTER et que je le stock dans token
-			String token = "token";
+					//On veut une réponse sour la forme REGISTER + Jetont
+					String[] parts = response.split("\\|");
+					if (parts.length >= 2 && parts[0].equals("REGISTERED")){
+						token = parts[1];
+						isRegistered = true;
+						System.out.println("Vous etes enregistré avac le jeton : " + token);
+					} else {
+						System.out.println("Erreur de connexion");
+					}
+				} else {
+					System.out.println("Commande invalide.");
+				}
 
-			//Envoie de la commande LS avec le jeton
-			out.println("LS|" + token + "|");
-			System.out.println("Commande LS envoyée au serveur.");
+			}
 
-			//Lecture et affichage de la réponse du serveur
-			String lsresponse = in.readLine();
-			System.out.println("lsresponse : " + lsresponse);
+			//Permettre a l'user d'entrer d'autres d'autres commandes après le REGISTER
+			boolean exit = false;
+			while (!exit){
+				System.out.println("Veuillez entrer une commande : ");
+				String command = sc.nextLine().trim();
+				if (command.equals("exit")){
+					//out.println(command);
+					exit = true;
+				} else {
+					out.println(command);
+					String responseServer = in.readLine();
+					System.out.println("Réponse du serveur : " + responseServer);
+				}
 
-			//Fermeture de la connexion après le test rapide
-			socket.close();
+			}
 
-		}catch(IOException e) {
+			System.out.println("Fermeture de la connexion");
+
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
 	}
 }
 

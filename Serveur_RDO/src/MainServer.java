@@ -15,7 +15,17 @@ import java.util.Scanner;
 
 //Déploiement Serveur + attente de connexion avec le client
 public class MainServer {
+
+    //Exemple de liste de fichier qu'on prend depuis le fichier de configuration
+    static ArrayList<String> filesList = new ArrayList<>();
+    
 	public static void main(String[] args)   {
+        
+        //Ajouts de fichier manuellement 
+        filesList.add("notes.txt");
+        filesList.add("notes2.pdf");
+        
+        
         try {
             //le serveur écoute sur le port 5000
             ServerSocket serverSocket = new ServerSocket(5000);
@@ -39,10 +49,12 @@ public class MainServer {
                             String token = TokenGenerator.generateToken();
                             out.println("REGISTERED|" + token + "|" );
                             System.out.println("Jeton envoyé : " + token);
+                        } else if () {
+                            
                         }
 
                         //Commande LS
-                        String messagleClient2 = in.readLine();
+                        /*String messagleClient2 = in.readLine();
                         System.out.println("Message recu : " + messagleClient2);
                         if (messagleClient2.startsWith("LS")){
                             //Extraction du jeton
@@ -62,7 +74,10 @@ public class MainServer {
                             out.println("ERROR");
                         }
                         // fermeture de la connexion
-                        clientSocket.close();
+                        clientSocket.close();*/
+                        
+                        
+                        
 
                     }catch(IOException e){
                         e.printStackTrace();
