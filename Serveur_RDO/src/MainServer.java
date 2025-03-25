@@ -20,6 +20,7 @@ public class MainServer {
     static ArrayList<String> filesList = new ArrayList<>();
     
 	public static void main(String[] args)   {
+        chargerConfig();
         
         //Ajouts de fichier manuellement 
         filesList.add("notes.txt");
@@ -41,43 +42,48 @@ public class MainServer {
                         BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
+                        boolean isRegistered = false;
+                        String token = null;
+
                         //Attente du message REGISTER
-                        String messagleClient = in.readLine();
-                        System.out.println("Message recu : " + messagleClient);
+                        String messageClient;
 
-                        if (messagleClient.startsWith("REGISTER")){
-                            String token = TokenGenerator.generateToken();
-                            out.println("REGISTERED|" + token + "|" );
-                            System.out.println("Jeton envoyé : " + token);
-                        } else if () {
-                            
-                        }
+                        while ((messageClient = in.readLine()) != null){
 
-                        //Commande LS
-                        /*String messagleClient2 = in.readLine();
-                        System.out.println("Message recu : " + messagleClient2);
-                        if (messagleClient2.startsWith("LS")){
-                            //Extraction du jeton
-                            String[] message = messagleClient2.split("\\|");
-                            String token = message[1]; // ??
+                            System.out.println("Message recu : " + messageClient);
+                            if(!isRegistered) {
+                                if (messageClient.startsWith("REGISTER")){
+                                    token = TokenGenerator.generateToken();
+                                    out.println("REGISTERED|" + token + "|" );
+                                    System.out.println("Jeton envoyé : " + token);
+                                    isRegistered = true;
+                                }else {
+                                    out.println("ERROR ! Vous devez vous enregistrer avant tout !");
+                                }
 
-                            //On considère que le jeton est toujours valide
-                            //Donc on fait une vérification ici
-                            StringBuilder response = new StringBuilder("LS|" + filesList.size());
-                            for (String file : filesList){
-                                response.append("|").append(file);
+                            } else {
+                                //Une fois ici on considère que le client est bien enregistré, on peut donc s'occuper des autres commandes
+                                if (messageClient.startsWith("LS")){
+                                    //Nous voulons receoit la commande ls + le token
+                                    String[] parts = messageClient.split("\\|");
+                                    if(parts.length >= 2 && parts[1].equals(token)) {
+                                        //implémentation de la réponse LS
+                                        StringBuilder response = new StringBuilder("LS|" + filesList.size());
+                                        for (String file : filesList){
+                                            response.append("|").append(file);
+                                        }
+                                        response.append("|");
+                                        out.println(response.toString());
+                                        System.out.println("LS sent : " + response.toString());
+                                    } else {
+                                        out.println("ERROR ! Format incorrect");
+                                    }
+                                } else {
+                                    out.println("ERROR ! Commande inconnue");
+                                }
                             }
-                            out.println(response.toString());
-                            System.out.println("Liste envoyée : " + response);
+
                         }
-                        else {
-                            out.println("ERROR");
-                        }
-                        // fermeture de la connexion
-                        clientSocket.close();*/
-                        
-                        
-                        
 
                     }catch(IOException e){
                         e.printStackTrace();
@@ -92,14 +98,14 @@ public class MainServer {
             e.printStackTrace();
         }
 
-        chargerConfig();
+
 
 	}
     //---------------------------
 
     //Listes pour stocker les configurations
     static ArrayList<String> peersList = new ArrayList<>();
-    static ArrayList<String> filesList = new ArrayList<>();
+    //static ArrayList<String> filesList = new ArrayList<>();
 
     //Méthode pour charger les configurations au démarrage
     public static void chargerConfig(){
