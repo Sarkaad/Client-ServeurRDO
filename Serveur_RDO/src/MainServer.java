@@ -10,6 +10,9 @@ import utils.TokenGenerator;
 
 import java.util.ArrayList;
 import java.util.Scanner;
+//import pour les telechargements de fichier
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 
 
@@ -23,8 +26,8 @@ public class MainServer {
         chargerConfig();
         
         //Ajouts de fichier manuellement 
-        filesList.add("notes.txt");
-        filesList.add("notes2.pdf");
+        //filesList.add("notes.txt");
+        //filesList.add("notes2.pdf");
         
         
         try {
@@ -63,11 +66,12 @@ public class MainServer {
 
                             } else {
                                 //Une fois ici on considère que le client est bien enregistré, on peut donc s'occuper des autres commandes
+                                //Commande LS
                                 if (messageClient.startsWith("LS")){
-                                    //Nous voulons receoit la commande ls + le token
+                                    //Nous voulons recevoir la commande ls + le token
                                     String[] parts = messageClient.split("\\|");
                                     if(parts.length >= 2 && parts[1].equals(token)) {
-                                        //implémentation de la réponse LS
+                                        //implémentation de la réponse LS. la réponse est composé du nombre de fichiers et de leur noms.
                                         StringBuilder response = new StringBuilder("LS|" + filesList.size());
                                         for (String file : filesList){
                                             response.append("|").append(file);
@@ -78,9 +82,80 @@ public class MainServer {
                                     } else {
                                         out.println("ERROR ! Format incorrect");
                                     }
+                                } else if (messageClient.startsWith("READ")) {
+                                    //out.println("ERROR ! Commande inconnue");
+                                    //nous voulons recevoir de la part du client READ + JETON + NOM DU FICHIER
+                                    String[] parts = messageClient.split("\\|");
+                                    if (parts.length >= 3 && parts[1].equals(token) ) {
+                                        String fileName = parts[2];
+                                        try {
+                                            //lecture du fichier en UTF-8
+                                            byte[] fileBytes = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(fileName));
+                                            //out.println("READ|" + fileName + "|" + new String(fileBytes, "UTF-8"));
+                                            //System.out.println("READ sent : " + fileName);
+                                            String fileContent = new String(fileBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+                                            int fragmentSize = 500;
+                                            int totalLength = fileContent.length();
+                                            int numFragments = (totalLength + fragmentSize - 1 ) / fragmentSize;
+
+                                            //Envoi du contenu par fragments
+                                            for (int i = 0; i < numFragments; i++) {
+                                                int start = i * fragmentSize;
+                                                int end = Math.min(start + fragmentSize, totalLength);
+                                                String fragment = fileContent.substring(start, end);
+                                                int isLast = (i == numFragments - 1) ? 1 : 0;
+                                                // le format du message est le suivant : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment_content>"
+                                                out.println("FILE|" + fileName + "|" + i + "|" + isLast + "|" + fragment);
+                                                System.out.println("Fragment " + i + "envoyé pour " + fragment);
+                                            }
+                                        } catch (IOException e) {
+                                            out.println("ERROR ! Fichier introuvable");
+                                            System.out.println("Erreur lors de la lecture du fichier " + fileName);
+                                        }
+
+                                    } else {
+                                        out.println("READ|ERROR|Format incorrect ou token invalide|");
+                                    }
                                 } else {
                                     out.println("ERROR ! Commande inconnue");
                                 }
+
+                                /*if (messageClient.startsWith("READ")) {
+                                    //nous voulons recevoir de la part du client READ + JETON + NOM DU FICHIER
+                                    String[] parts = messageClient.split("\\|");
+                                    if (parts.length >= 3 && parts[1].equals(token) ) {
+                                        String fileName = parts[2];
+                                        try {
+                                            //lecture du fichier en UTF-8
+                                            byte[] fileBytes = java.nio.file.Files.readAllBytes(Paths.get("config/Files_list/" + fileName));
+                                            out.println("READ|" + fileName + "|" + new String(fileBytes, "UTF-8"));
+                                            System.out.println("READ sent : " + fileName);
+                                            String fileContent = new String(fileBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+                                            int fragmentSize = 500;
+                                            int totalLength = fileContent.length();
+                                            int numFragments = (totalLength + fragmentSize - 1 ) / fragmentSize;
+
+                                            //Envoi du contenu par fragments
+                                            for (int i = 0; i < numFragments; i++) {
+                                                int start = i * fragmentSize;
+                                                int end = Math.min(start + fragmentSize, totalLength);
+                                                String fragment = fileContent.substring(start, end);
+                                                int isLast = (i == numFragments - 1) ? 1 : 0;
+                                                // le format du message est le suivant : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment_content>"
+                                                out.println("FILE|" + fileName + "|" + i + "|" + isLast + "|" + fragment);
+                                                System.out.println("Fragment " + i + "envoyé pour " + fragment);
+                                            }
+                                        } catch (IOException e) {
+                                            out.println("ERROR ! Fichier introuvable");
+                                            System.out.println("Erreur lors de la lecture du fichier " + fileName);
+                                        }
+
+                                    } else {
+                                        out.println("READ|ERROR|Format incorrect ou token invalide|");
+                                    }
+                                }*/
                             }
 
                         }
