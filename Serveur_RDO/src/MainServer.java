@@ -176,7 +176,7 @@ public class MainServer {
 
 
 	}
-    //-----------------------
+    //---------------------
 
     //Listes pour stocker les configurations
     static ArrayList<String> peersList = new ArrayList<>();
