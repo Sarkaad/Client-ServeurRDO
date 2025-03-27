@@ -8,9 +8,6 @@ import java.util.Scanner;
 // Connection avec le Serveur
 public class MainClient {
 	public static void main(String[] args) throws IOException {
-        /*//se connecte au serveur local sur le port 5000
-		Socket socket = new Socket("localhost", 5000);
-        System.out.println("Connecté au server !");*/
 
 		try(Socket socket = new Socket( "localhost", 5000 );
 			BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
@@ -54,8 +51,33 @@ public class MainClient {
 					exit = true;
 				} else {
 					out.println(command);
-					String responseServer = in.readLine();
-					System.out.println("Réponse du serveur : " + responseServer);
+					if (command.startsWith("READ")){
+						StringBuilder fileContent = new StringBuilder();
+						while (true){
+							String fileResponse = in.readLine();
+							if (fileResponse == null) {
+								System.out.println("Connexion interrompue");
+								break;
+							}
+							// On attend un format du type : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment>
+							String[] parts = fileResponse.split("\\|", 5);
+							if (parts.length >= 5 && parts[0].equals("FILE")){
+								fileContent.append(parts[4]);
+								//Si isLast vaut 1 alors c'est le dernier fragment
+								if (parts[3].equals("1")){
+									break;
+								}
+							} else {
+								System.out.println("Réponse inattendue : " + fileResponse);
+								break;
+							}
+						}
+						System.out.println("Contenu du fichier : " + fileContent.toString());
+					} else {
+						String responseServer = in.readLine();
+						System.out.println("Réponse du serveur : " + responseServer);
+					}
+
 				}
 
 			}
