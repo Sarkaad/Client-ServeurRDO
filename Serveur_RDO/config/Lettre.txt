@@ -1,14 +1,6 @@
-Cher(e) ami(e),
-
-Je t’écris aujourd’hui pour partager quelques réflexions sur la beauté qui nous entoure.
-Chaque jour, nous sommes entourés de moments simples et pourtant si précieux : le chant des oiseaux le matin, un sourire échangé dans la rue ou encore la douce lumière d’un coucher de soleil.
-Il suffit parfois de s’arrêter un instant, de respirer profondément et d’ouvrir grand les yeux pour saisir pleinement ces instants éphémères.
-
-Malheureusement, dans le tourbillon de la vie moderne, nous avons tendance à oublier ces petites merveilles.
-Le travail, les responsabilités et le rythme effréné du quotidien nous laissent peu de temps pour nous émerveiller.
-Pourtant, prendre quelques minutes pour contempler la nature, écouter nos proches ou savourer un bon livre peut nous apporter un véritable sentiment de sérénité et de gratitude.
-
-Je t’encourage donc à cultiver cette curiosité et à prendre chaque jour un moment pour observer, ressentir et apprécier la vie.
-C’est un moyen simple de trouver un équilibre intérieur et de garder un esprit ouvert, même dans les périodes difficiles.
-J’espère que ces quelques lignes t’inspireront à profiter pleinement de chaque instant.
-Prends soin de toi et à très bientôt.
+Bonjour
+Ceci est un test pour vérifier la lecture de fichiers contenant plusieurs lignes.
+Chaque ligne doit être correctement transmise sans être coupée.
+Merci d'utiliser cet exemple pour valider le mécanisme de fragmentation.
+Cordialement
+Votre Projet Réseau.
