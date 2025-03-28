@@ -1,1 +1,6 @@
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum. Cras venenatis euismod malesuada. Nulla facilisi. Donec finibus, nulla at scelerisque cursus, neque lorem bibendum odio, a dignissim dui elit a libero. Mauris vestibulum risus et diam fermentum, eget tempor massa cursus. Sed hendrerit, nisl at convallis facilisis, nisl urna fermentum nisi, ac blandit nunc sapien eget est. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Integer bibendum sapien vitae neque luctus, ac tristique lorem ullamcorper. Duis varius, nibh in consequat dapibus, urna arcu porttitor sapien, ut varius justo neque non neque. Suspendisse potenti. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+Bonjour
+Ceci est un test pour vérifier la lecture de fichiers contenant plusieurs lignes.
+Chaque ligne doit être correctement transmise sans être coupée.
+Merci d'utiliser cet exemple pour valider le mécanisme de fragmentation.
+Cordialement
+Votre Projet Réseau.

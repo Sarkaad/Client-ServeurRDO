@@ -5,7 +5,11 @@ import utils.TokenGenerator;
 //Liste des imports pour la lecture des deux fichier .txt au démarrage du serveur
 import utils.TokenGenerator;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Scanner;
+//Import pour encodage
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 //import pour les telechargements de fichier
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -89,6 +93,7 @@ public class MainServer {
                                             int totalLength = fileContent.length();
                                             int numFragments = (totalLength + fragmentSize - 1 ) / fragmentSize;
 
+
                                             //Affichage de l'envoi par fragement
                                             System.out.println("Contenu total (" + totalLength + " Caractères ), découpé en " + numFragments + "fragments.");
 
@@ -98,9 +103,12 @@ public class MainServer {
                                                 int end = Math.min(start + fragmentSize, totalLength);
                                                 String fragment = fileContent.substring(start, end);
                                                 int isLast = (i == numFragments - 1) ? 1 : 0;
+                                                //On encode le fichier en base 64
+                                                String encodedFragment = Base64.getEncoder().encodeToString(fragment.getBytes(StandardCharsets.UTF_8));
+                                                out.println("FILE|" + fileName + "|"  + i + "|" + isLast + "|" + encodedFragment);
                                                 // le format du message est le suivant : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment_content>"
                                                 out.println("FILE|" + fileName + "|" + i + "|" + isLast + "|" + fragment);
-                                                System.out.println("Fragment " + i + " envoyé pour : " + fragment);
+                                                System.out.println("Fragment " + i + " envoyé (offset = " + start + ", isLast = " + isLast + ")");
                                             }
                                         } catch (IOException e) {
                                             out.println("ERROR ! Fichier introuvable");
