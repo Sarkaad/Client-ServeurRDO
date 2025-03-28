@@ -4,6 +4,9 @@ import java.io.*;
 import java.net.Socket;
 import java.io.IOException;
 import java.util.Scanner;
+//import pour décodage/encodage
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 // Connection avec le Serveur
 public class MainClient {
@@ -62,7 +65,13 @@ public class MainClient {
 							// On attend un format du type : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment>
 							String[] parts = fileResponse.split("\\|", 5);
 							if (parts.length >= 5 && parts[0].equals("FILE")){
-								fileContent.append(parts[4]);
+								System.out.println("Reception du fragment offset = " + parts[2] + ", isLast = " + parts[3]);
+								System.out.println("Message reçu du serveur : " + fileResponse);
+
+								//Décodage du fragment
+								byte[] decodedBytes = Base64.getDecoder().decode(parts[4]);
+								String fragment = new String(decodedBytes, StandardCharsets.UTF_8);
+								fileContent.append(fragment);
 								//Si isLast vaut 1 alors c'est le dernier fragment
 								if (parts[3].equals("1")){
 									break;
@@ -72,7 +81,8 @@ public class MainClient {
 								break;
 							}
 						}
-						System.out.println("Contenu du fichier : " + fileContent.toString());
+						System.out.println("Contenu complet du fichier recu : " );
+						System.out.println(fileContent.toString());
 					} else {
 						String responseServer = in.readLine();
 						System.out.println("Réponse du serveur : " + responseServer);
