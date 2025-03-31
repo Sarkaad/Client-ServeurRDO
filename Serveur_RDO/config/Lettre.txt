@@ -3,4 +3,10 @@ Ceci est un test pour vérifier la lecture de fichiers contenant plusieurs ligne
 Chaque ligne doit être correctement transmise sans être coupée.
 Merci d'utiliser cet exemple pour valider le mécanisme de fragmentation.
 Cordialement
+Je voudrais aussi comprendre pourquoi est ce que
+lors de mon envoie de la commande READ
+Mon code semble perdre les pédales ? Je ne suis pas d'accord.
+Il faut donc que je sois en mesure de lire des documents meme si il sont très long.
+Après tout c'est bien l'objectif de la commande read non ?
+Alors nous allons essayer jusqu'a ce que cela fonctionne comme il se doit et que nous aillons les résulats voulu.
 Votre Projet Réseau.
