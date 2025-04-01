@@ -76,7 +76,7 @@ public class MainServer {
                                         out.println(response.toString());
                                         System.out.println("LS sent : " + response.toString());
                                     } else {
-                                        out.println("ERROR ! Format incorrect");
+                                        out.println("LS|UNAUTHORIZED");
                                     }
                                 } else if (messageClient.startsWith("READ")) {
                                     //out.println("ERROR ! Commande inconnue");
@@ -95,7 +95,7 @@ public class MainServer {
 
 
                                             //Affichage de l'envoi par fragement
-                                            System.out.println("Contenu total (" + totalLength + " Caractères ), découpé en " + numFragments + "fragments.");
+                                            System.out.println("Contenu total (" + totalLength + " Caractères ), découpé en " + numFragments + " fragments.");
 
                                             //Envoi du contenu par fragments
                                             for (int i = 0; i < numFragments; i++) {
@@ -106,8 +106,6 @@ public class MainServer {
                                                 //On encode le fichier en base 64
                                                 String encodedFragment = Base64.getEncoder().encodeToString(fragment.getBytes(StandardCharsets.UTF_8));
                                                 out.println("FILE|" + fileName + "|"  + i + "|" + isLast + "|" + encodedFragment);
-                                                // le format du message est le suivant : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment_content>"
-                                                out.println("FILE|" + fileName + "|" + i + "|" + isLast + "|" + fragment);
                                                 System.out.println("Fragment " + i + " envoyé (offset = " + start + ", isLast = " + isLast + ")");
                                             }
                                         } catch (IOException e) {
