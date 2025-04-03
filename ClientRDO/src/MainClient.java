@@ -3,6 +3,9 @@ import java.io.PrintWriter;
 import java.io.*;
 import java.net.Socket;
 import java.io.IOException;
+// Rajouté pour la nouvelle méthode de connexion au serveur
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 //import pour décodage/encodage
 import java.util.Base64;
@@ -10,9 +13,73 @@ import java.nio.charset.StandardCharsets;
 
 // Connection avec le Serveur
 public class MainClient {
-	public static void main(String[] args) throws IOException {
 
-		try(Socket socket = new Socket( "localhost", 5000 );
+	//Demander a l'utilisateur de saisir la touche E pour se connecter avec le serveur
+	//La connexion se fait par l'entrée de l'adresse IP et le port du serveur
+	public static Socket connect() {
+		Scanner sc = new Scanner(System.in);
+		Socket socket = null;
+
+		//On demande a l'user de taper la touche E pour ouvrir le système de connexion au serveur
+		//Et si l'user ne tape pas la touche E, alors on annule la connexion et on retourne null
+		System.out.println("Taper E pour établir une connexion a un serveur : ");
+		String input = sc.nextLine().trim();
+		if (!input.equalsIgnoreCase("E")) {
+			System.out.println("Commande non reconnue, connexion annulée.");
+			return null;
+		}
+
+		//Une fois que l'user aura entrer la touche E, on peut maintenant lui demander d'entrer L'IP et le port
+		// Pour l'adresse IP :
+		System.out.println("Veuillez entrer l'adresse IP du serveur auquel vous voulez vous connecter : ");
+		String ip = sc.nextLine().trim(); // Cette ligne permet de supprimer les espaces superflus au début et a la fin de l'entrée de l'user
+
+		/*Ici on fait une validation de l'adresse IP entrée par l'user. Pour cela je me sert d'un regex qui permet entre autre
+		de limiter ce que entre l'user.*/
+		String ipv4Pattern = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)(\\.|$)){4}$";
+		if (!ip.matches(ipv4Pattern)) {
+			System.out.println("Adresse IP introuvable/Invalide");
+			return null;
+		}
+
+		// Pour le Port :
+		System.out.println("Veuillez entrer le port de ce serveur : ");
+		String portStr = sc.nextLine().trim();
+		int port;
+		try {
+			port = Integer.parseInt(portStr);
+			if (port < 1 || port > 65535) {
+				System.out.println("Port invalide (doit etre entre 1 et 65535)");
+				return null;
+			}
+		} catch (NumberFormatException e){
+			System.out.println("Port invalide");
+			return null;
+		}
+
+		//Ici je tente d'établir la connexion et j'ajoute un ensemble de Log pour permettre au client de savoir ce qu'il se passe
+		try {
+			socket = new Socket(ip,port);
+			System.out.println("Connexion établie avec le serveur " + ip + ":" + port);
+		}catch (UnknownHostException e) {
+			System.out.println("Hote inconnu.");
+		} catch (IOException e) {
+			System.out.println("Erreur lors de la connexion au serveur.");
+		}
+		return socket;
+	}
+
+
+
+	public static void main(String[] args) throws IOException {
+		//Ici on fait l'appel direct de la fonction Connect
+		Socket socket = connect();
+		if (socket == null) {
+			System.out.println("La connexion n'a pas pu etre établie.");
+			return;
+		}
+
+		try(//Socket socket = new Socket( "localhost", 5000 );
 			BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
 			PrintWriter out = new PrintWriter( socket.getOutputStream(), true);
 			Scanner sc = new Scanner(System.in)) {
@@ -44,7 +111,7 @@ public class MainClient {
 
 			}
 
-			//Permettre a l'user d'entrer d'autres d'autres commandes après le REGISTER
+			//Permettre a l'user d'entrer d'autres commandes après le REGISTER
 			boolean exit = false;
 			while (!exit){
 				System.out.println("Veuillez entrer une commande : ");
