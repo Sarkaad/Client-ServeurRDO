@@ -79,10 +79,16 @@ public class MainClient {
 			return;
 		}
 
-		try(//Socket socket = new Socket( "localhost", 5000 );
-			BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
+		BufferedReader in = null;
+		PrintWriter out = null;
+		Scanner sc = new Scanner(System.in);
+
+		try {
+			/*BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
 			PrintWriter out = new PrintWriter( socket.getOutputStream(), true);
-			Scanner sc = new Scanner(System.in)) {
+			Scanner sc = new Scanner(System.in)*/
+			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			out = new PrintWriter(socket.getOutputStream(),true);
 
 			String token = null;
 			boolean isRegistered = false;
@@ -116,6 +122,23 @@ public class MainClient {
 			while (!exit){
 				System.out.println("Veuillez entrer une commande : ");
 				String command = sc.nextLine().trim();
+				/*Ici on permet a l'user de fermer la connexion actuelle et de se connecter ailleurs via la touche E
+				en se servant de la fonction connect*/
+				if (command.equalsIgnoreCase("E")) {
+					System.out.println("Reconnexion demandée...");
+					socket.close();
+					socket = connect();
+					if (socket == null ) {
+						System.out.println("La reconnexion a échouée");
+						exit = true;
+					} else {
+						 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+						 out = new PrintWriter(socket.getOutputStream(), true);
+						System.out.println("Reconnexion établie !");
+					}
+					continue;
+				}
+
 				if (command.equals("exit")){
 					//out.println(command);
 					exit = true;
