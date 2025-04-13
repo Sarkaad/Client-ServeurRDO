@@ -84,34 +84,67 @@ public class MainServer {
                                     String[] parts = messageClient.split("\\|");
                                     if (parts.length >= 3 && parts[1].equals(token) ) {
                                         String fileName = parts[2];
-                                        try {
-                                            //lecture du fichier en UTF-8
-                                            byte[] fileBytes = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(fileName));
-                                            String fileContent = new String(fileBytes, java.nio.charset.StandardCharsets.UTF_8);
+                                        //Pour le bon fonctionnement du read redirect nous allons commencer ici par vérifier si le fichier que nous voulons lire existe localement
+                                        java.nio.file.Path localPath = java.nio.file.Paths.get("config",fileName);
+                                        if (java.nio.file.Files.exists(localPath)) {
 
-                                            int fragmentSize = 500;
-                                            int totalLength = fileContent.length();
-                                            int numFragments = (totalLength + fragmentSize - 1 ) / fragmentSize;
+                                            try {
+                                                //lecture du fichier en UTF-8
+                                                byte[] fileBytes = java.nio.file.Files.readAllBytes(localPath);
+                                                String fileContent = new String(fileBytes, java.nio.charset.StandardCharsets.UTF_8);
+
+                                                int fragmentSize = 500;
+                                                int totalLength = fileContent.length();
+                                                int numFragments = (totalLength + fragmentSize - 1 ) / fragmentSize;
 
 
-                                            //Affichage de l'envoi par fragement
-                                            System.out.println("Contenu total (" + totalLength + " Caractères ), découpé en " + numFragments + " fragments.");
+                                                //Affichage de l'envoi par fragement
+                                                System.out.println("Contenu total (" + totalLength + " Caractères ), découpé en " + numFragments + " fragments.");
 
-                                            //Envoi du contenu par fragments
-                                            for (int i = 0; i < numFragments; i++) {
-                                                int start = i * fragmentSize;
-                                                int end = Math.min(start + fragmentSize, totalLength);
-                                                String fragment = fileContent.substring(start, end);
-                                                int isLast = (i == numFragments - 1) ? 1 : 0;
-                                                //On encode le fichier en base 64
-                                                String encodedFragment = Base64.getEncoder().encodeToString(fragment.getBytes(StandardCharsets.UTF_8));
-                                                out.println("FILE|" + fileName + "|"  + i + "|" + isLast + "|" + encodedFragment);
-                                                System.out.println("Fragment " + i + " envoyé (offset = " + start + ", isLast = " + isLast + ")");
+                                                //Envoi du contenu par fragments
+                                                for (int i = 0; i < numFragments; i++) {
+                                                    int start = i * fragmentSize;
+                                                    int end = Math.min(start + fragmentSize, totalLength);
+                                                    String fragment = fileContent.substring(start, end);
+                                                    int isLast = (i == numFragments - 1) ? 1 : 0;
+                                                    //On encode le fichier en base 64
+                                                    String encodedFragment = Base64.getEncoder().encodeToString(fragment.getBytes(StandardCharsets.UTF_8));
+                                                    out.println("FILE|" + fileName + "|"  + i + "|" + isLast + "|" + encodedFragment);
+                                                    System.out.println("Fragment " + i + " envoyé (offset = " + start + ", isLast = " + isLast + ")");
+                                                }
+                                            } catch (IOException e) {
+                                                out.println("ERROR ! Fichier introuvable");
+                                                System.out.println("Erreur lors de la lecture du fichier " + fileName);
                                             }
-                                        } catch (IOException e) {
-                                            out.println("ERROR ! Fichier introuvable");
-                                            System.out.println("Erreur lors de la lecture du fichier " + fileName);
+
+                                        } else {
+                                            // Le fichier n'existe pas localement : Vérifier dans la Files_list pour une redirection
+                                            boolean redirectFound = false;
+                                            for (String entry : filesList) {
+                                                // On suppose que chaque entrée est sous la forme "nomFichier ip:port"
+                                                String[] entryParts = entry.split(" ");
+                                                // entryParts[0] correspond au nom du fichier
+                                                if (entryParts[0].equals(fileName) && entryParts.length >= 2) {
+                                                    //On decompose l'adresse de redirection
+                                                    String[] addrParts = entryParts[1].split(":");
+                                                    if (addrParts.length == 2) {
+                                                        String remoteIP = addrParts[0];
+                                                        String remotePort = addrParts[1];
+                                                        // Ici nous créons un nouveau token qui sera utilisé pour la connexion au serveur distant
+                                                        String newToken = TokenGenerator.generateToken();
+                                                        out.println("READ-REDIRECT|" + remoteIP + "|" + remotePort + "|" + newToken + "|");
+                                                        System.out.println("REDIRECT envoyé : READ-REDIRECT|" + remoteIP + "|" + remotePort + "|" + newToken + "|");
+                                                        redirectFound = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            if (!redirectFound) {
+                                                out.println("READ|ERROR|Fichier non trouvé|");
+                                                System.out.println("Fichier " + fileName + " non trouvé localement et pas de redirection définie.");
+                                            }
                                         }
+
 
                                     } else {
                                         out.println("READ|ERROR|Format incorrect ou token invalide|");
