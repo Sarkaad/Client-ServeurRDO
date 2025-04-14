@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 //import pour les telechargements de fichier
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
 
 
 
@@ -125,13 +127,14 @@ public class MainServer {
                                                 String[] entryParts = entry.split(" ");
                                                 // entryParts[0] correspond au nom du fichier
                                                 if (entryParts[0].equals(fileName) && entryParts.length >= 2) {
-                                                    //On decompose l'adresse de redirection
+                                                    // On décompose l'adresse de redirection
                                                     String[] addrParts = entryParts[1].split(":");
                                                     if (addrParts.length == 2) {
                                                         String remoteIP = addrParts[0];
                                                         String remotePort = addrParts[1];
-                                                        // Ici nous créons un nouveau token qui sera utilisé pour la connexion au serveur distant
+                                                        // Création du nouveau jeton à utiliser pour la connexion sur le serveur distant
                                                         String newToken = TokenGenerator.generateToken();
+                                                        // Envoie du message READ-REDIRECT avec IP, port et le nouveau jeton
                                                         out.println("READ-REDIRECT|" + remoteIP + "|" + remotePort + "|" + newToken + "|");
                                                         System.out.println("REDIRECT envoyé : READ-REDIRECT|" + remoteIP + "|" + remotePort + "|" + newToken + "|");
                                                         redirectFound = true;
@@ -148,6 +151,64 @@ public class MainServer {
 
                                     } else {
                                         out.println("READ|ERROR|Format incorrect ou token invalide|");
+                                    }
+                                } else if (messageClient.startsWith("WRITE")) {
+                                    // Ajout de la commande WRITE ici
+                                    // Format attendu : WRITE|<token>|<nom_du_fichier>|
+                                    String[] parts = messageClient.split("\\|");
+                                    if (parts.length >= 3 && parts[1].equals(token)) {
+                                        String fileName = parts[2];
+                                        // Envoi de l'autorisation d'écriture
+                                        out.println("WRITE|BEGIN");
+                                        System.out.println("WRITE BEGIN pour le fichier : " + fileName);
+
+                                        // Réception des fragments envoyés par le client
+                                        StringBuilder fileContent = new StringBuilder();
+                                        while (true) {
+                                            String fragmentMsg = in.readLine();
+                                            if (fragmentMsg == null) {
+                                                System.out.println("Connexion interrompue durant la réception du fichier.");
+                                                break;
+                                            }
+                                            // Format attendu pour chaque fragment :
+                                            // FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment_encodé_en_Base64>
+                                            String[] fragParts = fragmentMsg.split("\\|", 5);
+                                            if (fragParts.length >= 5 && fragParts[0].equals("FILE") && fragParts[1].equals(fileName)) {
+                                                System.out.println("Réception du fragment offset = " + fragParts[2] + ", isLast = " + fragParts[3]);
+                                                try {
+                                                    byte[] decodedBytes = Base64.getDecoder().decode(fragParts[4]);
+                                                    String fragment = new String(decodedBytes, StandardCharsets.UTF_8);
+                                                    fileContent.append(fragment);
+                                                } catch (IllegalArgumentException ex) {
+                                                    System.out.println("Erreur lors du décodage du fragment, utilisation du fragment brut.");
+                                                    fileContent.append(fragParts[4]);
+                                                }
+                                                // Si ce fragment est le dernier (isLast = 1), on sort de la boucle
+                                                if (fragParts[3].equals("1")) {
+                                                    break;
+                                                }
+                                            } else {
+                                                System.out.println("Réponse inattendue durant WRITE : " + fragmentMsg);
+                                                break;
+                                            }
+                                        }
+
+                                        // Enregistrement du fichier dans le dossier "uploads"
+                                        try {
+                                            Files.createDirectories(Paths.get("config")); // Crée le dossier s'il n'existe pas
+                                            Files.write(Paths.get("config", fileName), fileContent.toString().getBytes(StandardCharsets.UTF_8));
+                                            // Mise à jour de la liste des fichiers disponibles
+                                            if (!filesList.contains(fileName)) {
+                                                filesList.add(fileName);
+                                            }
+                                            out.println("WRITE|OK|Fichier enregistré");
+                                            System.out.println("Fichier " + fileName + " enregistré dans 'config'.");
+                                        } catch (IOException e) {
+                                            out.println("WRITE|ERROR|Echec d'enregistrement");
+                                            System.out.println("Erreur d'enregistrement du fichier " + fileName);
+                                        }
+                                    } else {
+                                        out.println("WRITE|ERROR|Format incorrect ou token invalide");
                                     }
                                 } else {
                                     out.println("ERROR ! Commande inconnue");
