@@ -10,6 +10,11 @@ import java.util.Scanner;
 //import pour décodage/encodage
 import java.util.Base64;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+//import pour sélections des fichiers
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
 
 // Connection avec le Serveur
 public class MainClient {
@@ -34,8 +39,8 @@ public class MainClient {
 		System.out.println("Veuillez entrer l'adresse IP du serveur auquel vous voulez vous connecter : ");
 		String ip = sc.nextLine().trim(); // Cette ligne permet de supprimer les espaces superflus au début et a la fin de l'entrée de l'user
 
-		/*Ici on fait une validation de l'adresse IP entrée par l'user. Pour cela je me sert d'un regex qui permet entre autre
-		de limiter ce que entre l'user.*/
+        /*Ici on fait une validation de l'adresse IP entrée par l'user. Pour cela je me sert d'un regex qui permet entre autre
+        de limiter ce que entre l'user.*/
 		String ipv4Pattern = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)(\\.|$)){4}$";
 		if (!ip.matches(ipv4Pattern)) {
 			System.out.println("Adresse IP introuvable/Invalide");
@@ -84,9 +89,6 @@ public class MainClient {
 		Scanner sc = new Scanner(System.in);
 
 		try {
-			/*BufferedReader in = new BufferedReader( new InputStreamReader( socket.getInputStream() ) );
-			PrintWriter out = new PrintWriter( socket.getOutputStream(), true);
-			Scanner sc = new Scanner(System.in)*/
 			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			out = new PrintWriter(socket.getOutputStream(),true);
 
@@ -114,7 +116,6 @@ public class MainClient {
 				} else {
 					System.out.println("Commande invalide.");
 				}
-
 			}
 
 			//Permettre a l'user d'entrer d'autres commandes après le REGISTER
@@ -132,38 +133,37 @@ public class MainClient {
 						System.out.println("La reconnexion a échouée");
 						exit = true;
 					} else {
-						 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-						 out = new PrintWriter(socket.getOutputStream(), true);
+						in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+						out = new PrintWriter(socket.getOutputStream(), true);
 						System.out.println("Reconnexion établie !");
 					}
 					continue;
 				}
 
 				if (command.equals("exit")){
-					//out.println(command);
 					exit = true;
 				} else {
-					out.println(command);
 					if (command.startsWith("READ")){
+						out.println(command);
 						StringBuilder fileContent = new StringBuilder();
+						boolean fragmentReceived = false;
 						while (true){
 							String fileResponse = in.readLine();
 							if (fileResponse == null) {
 								System.out.println("Connexion interrompue");
 								break;
 							}
-							// On attend un format du type : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragment>
-							String[] parts = fileResponse.split("\\|", 5);
-							if (parts.length >= 5 && parts[0].equals("FILE")){
-								System.out.println("Reception du fragment offset = " + parts[2] + ", isLast = " + parts[3]);
+							// On attend un format du type : "FILE|<nom_du_fichier>|<offset>|<isLast>|<fragmentEncodé>"
+							String[] partsResp = fileResponse.split("\\|", 5);
+							if (partsResp.length >= 5 && partsResp[0].equals("FILE")){
+								fragmentReceived = true;
+								System.out.println("Reception du fragment offset = " + partsResp[2] + ", isLast = " + partsResp[3]);
 								System.out.println("Message reçu du serveur : " + fileResponse);
 
-								//Décodage du fragment
-								byte[] decodedBytes = Base64.getDecoder().decode(parts[4]);
+								byte[] decodedBytes = Base64.getDecoder().decode(partsResp[4]);
 								String fragment = new String(decodedBytes, StandardCharsets.UTF_8);
 								fileContent.append(fragment);
-								//Si isLast vaut 1 alors c'est le dernier fragment
-								if (parts[3].equals("1")){
+								if (partsResp[3].equals("1")){
 									break;
 								}
 							} else {
@@ -171,25 +171,89 @@ public class MainClient {
 								break;
 							}
 						}
-						System.out.println("Contenu complet du fichier recu : " );
-						System.out.println(fileContent.toString());
+						if (fragmentReceived) {
+							System.out.println("Contenu complet du fichier recu : ");
+							System.out.println(fileContent.toString());
+						}
+					} else if (command.startsWith("WRITE")) {
+						// Branche WRITE : on utilise directement le fichier indiqué dans la commande
+						// Format attendu : WRITE|<token>|<nom_du_fichier>|
+						String[] writeParts = command.split("\\|");
+						if (writeParts.length < 3) {
+							System.out.println("Commande WRITE invalide. Format attendu : WRITE|<token>|<nom_fichier>|");
+							continue;
+						}
+						// On envoie directement la commande tapée par l'utilisateur
+						out.println(command);
+						String response = in.readLine();
+						if (response == null) {
+							System.out.println("Connexion interrompue durant la commande WRITE.");
+							continue;
+						}
+						if (response.startsWith("WRITE|BEGIN")) {
+							System.out.println("Le serveur autorise l'écriture. Préparation de l'envoi du fichier...");
+							// On suppose que le fichier se trouve dans le dossier "src" et porte le même nom que writeParts[2]
+							String localFileName = writeParts[2];  // ex : "document.txt"
+							File selectedFile = new File("src", localFileName);
+
+							if (!selectedFile.exists() || !selectedFile.isFile()) {
+								System.out.println("Le fichier " + localFileName + " n'existe pas dans 'src'.");
+								continue;
+							}
+
+							try {
+								byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
+								String fileContent = new String(fileBytes, StandardCharsets.UTF_8);
+								int fragmentSize = 500;
+								int totalLength = fileContent.length();
+								int numFragments = (totalLength + fragmentSize - 1) / fragmentSize;
+								System.out.println("Fichier lu (" + totalLength + " caractères), découpé en " + numFragments + " fragments.");
+								for (int i = 0; i < numFragments; i++) {
+									int start = i * fragmentSize;
+									int end = Math.min(start + fragmentSize, totalLength);
+									String fragment = fileContent.substring(start, end);
+									int isLast = (i == numFragments - 1) ? 1 : 0;
+									String encodedFragment = Base64.getEncoder().encodeToString(fragment.getBytes(StandardCharsets.UTF_8));
+									out.println("FILE|" + localFileName + "|" + i + "|" + isLast + "|" + encodedFragment);
+									System.out.println("Fragment " + i + " envoyé (offset = " + start + ", isLast = " + isLast + ")");
+								}
+								String finalResponse = in.readLine();
+								System.out.println("Réponse finale du serveur : " + finalResponse);
+							} catch (IOException e) {
+								System.out.println("Erreur lors de la lecture du fichier " + selectedFile.getAbsolutePath());
+								e.printStackTrace();
+							}
+						} else {
+							System.out.println("Le serveur n'a pas autorisé le transfert (" + response + ").");
+						}
 					} else {
+						out.println(command);
 						String responseServer = in.readLine();
 						System.out.println("Réponse du serveur : " + responseServer);
 					}
-
 				}
-
 			}
 
 			System.out.println("Fermeture de la connexion");
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (in != null)
+					in.close();
+				if (out != null)
+					out.close();
+				if (socket != null && !socket.isClosed())
+					socket.close();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
 		}
-
 	}
 }
+
+
 
 // ----------------------------------------
 
