@@ -1,4 +1,3 @@
-//package client;
 
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -14,9 +13,7 @@ import java.util.Base64;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-//import pour sélections des fichiers
-import javax.swing.JFileChooser;
-import javax.swing.UIManager;
+
 
 // Connection avec le Serveur
 public class MainClient {

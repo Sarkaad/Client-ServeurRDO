@@ -1,1 +1,2 @@
 Bonjour, ceci est un message de la part des terriens.
+Ici nous prouvons que nous sommes bien mesure de lire des fichiers a partir de la commande READ.
